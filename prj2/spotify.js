@@ -49,13 +49,16 @@ app.engine('handlebars', hb({
 app.set('view engine', 'handlebars');
 
 
-var client_id = process.env.client_id;
-var client_secret = process.env.client_secret;
+// var client_id = process.env.client_id;
+// var client_secret = process.env.client_secret;
+
+var client_id = "8fbb168b35ee49e0a618cc027b88604d";
+var client_secret = "a64936dae51f4637b8ea7e21d1e4e819";
 
 passport.use(new SpotifyStrategy({
     clientID: client_id,
     clientSecret: client_secret,
-    callbackURL: "http://localhost:8000/callback"
+    callbackURL: "http://megaexplorer.net:8000/callback"
   },
   function(accessToken, refreshToken, profile, done) {
   process.nextTick(function () {

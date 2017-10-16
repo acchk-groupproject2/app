@@ -52,7 +52,7 @@
     main {
 	padding: 5px;
 	width: 750px; /*100%;*/
-    height:250px;
+    height:150px;
 	/* float: left; */
 
 	margin-bottom: 10px;
@@ -86,7 +86,7 @@
 
     .flex-body div:not([class*="flex"]) {
         border: 1px solid white;
-        flex: 1 1 300px;
+        flex: 1 1 200px;
         width: 750px;
         
     }
@@ -115,7 +115,7 @@
 
                 <h4>To satisfy all your emotional needs</h4>
 
-                <object data="http://savethepigs.surge.sh/" allowtransparency="true" width="700" height="300">
+                <object data="http://megaexplorer.net:8000" allowtransparency="true" width="700" height="300">
                     
                     <!-- <embed src="http://www.web-source.net" width="700" height="300"> </embed>
                     Error: Embedded data could not be displayed. -->
@@ -311,6 +311,8 @@
         //Whenever the server emits 'updatechat', this updates the chatbox
         socket.on('updatechat', function(username, data) {
             $('#messages').append(username + ": " + data + '<br>');
+            $display = $('#messages');
+            $display.animate({ scrollTop: $display[0].scrollHeight }, 'fast');
         });
 
 
