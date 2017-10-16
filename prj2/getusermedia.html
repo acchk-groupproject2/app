@@ -1,0 +1,33 @@
+<html>
+    <body>
+        <video id="v" width="300" height="300"></video>
+        <input id="b" type="button" disabled="true" value="Take Picture"></input>
+        <canvas id="c" style="display:none;" width="300" height="300"></canvas>
+        <p id='textt'>fff</p>
+        <button id='bbbb'>click</button>
+    </body>
+
+    <script type="text/javascript">
+
+         
+        navigator.getUserMedia({video: true}, function(stream) {
+            var video = document.getElementById("v");
+            var canvas = document.getElementById("c");
+            var button = document.getElementById("b");
+
+            video.src = stream;
+            button.disabled = false;
+            button.onclick = function() {
+                canvas.getContext("2d").drawImage(video, 0, 0, 300, 300, 0, 0, 300, 300);
+                var img = canvas.toDataURL('image/jpg', 1.0);
+                alert("done" );
+                $(function() {
+                    $('#bbbb').on('click', (e)=>{
+                        e.preventDefault();
+                        alert(img);
+                    })
+                })
+            };
+        }, function(err) { alert("there was an error " + err)});
+        </script>
+        </html>

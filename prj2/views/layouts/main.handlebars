@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>...</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </head>
+
+    <style>
+        body{
+            background-color: #ffe6e6;
+            text-align: center;
+        }
+    </style>
+
+    <body>
+        
+        {{{body}}}
+        
+    </body>
+    {{!-- <script type='text/javascript'>
+        $(function(){
+
+
+
+        $('.login').on('click', ()=>{
+            var client_secret = 'a68b21a863a44fe4b4c9be2668c94e52'; // Your secret
+            var scopes = 'user-read-currently-playing streaming';
+            var redirect_uri = 'http://localhost:8080/home';
+
+            var authLink = 'https://accounts.spotify.com/authorize' + '?response_type=code' +
+                    '&client_id=' + client_id +
+                    (scopes ? '&scope=' + encodeURIComponent(scopes) : '') +
+                    '&redirect_uri=' + encodeURIComponent(redirect_uri);
+            $(window).attr('location', authLink)
+        })
+
+        });
+    </script>  --}}
+</html>
