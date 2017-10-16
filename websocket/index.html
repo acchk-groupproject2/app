@@ -140,8 +140,18 @@
         <div class="flex-row">
 
             <aside>
+
+                <h1 style="text-decoration: underline">Rooms</h1>
+                <ul id="rooms"></ul>
+
                 <h1 style="text-decoration: underline">Online Users</h1>
                 <ul id='users'></ul>
+
+                
+
+                <!-- <ul id="room creation"></ul> -->
+                <!-- <input id="roomname" style="width:200px;" />
+                 <input type="button" id="roombutton" value="create room" /> -->
             
             </aside>
 
@@ -189,6 +199,23 @@
             $('#messages').append(username + ": " + data + '<br>');
         });
 
+
+        socket.on('updaterooms', function (rooms, current_room) {
+            $('#rooms').empty();
+            $.each(rooms, function(key, value) {
+                if(value == current_room){
+                    $('#rooms').append('<ul>' + value + '</ul>');
+                }
+                else {
+                    $('#rooms').append('<ul><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></ul>');
+                }
+            });
+        });
+
+        function switchRoom(room){
+            socket.emit('switchRoom', room);
+        }
+
         $(function () {
         
             //When the user clicks SEND
@@ -204,6 +231,12 @@
                 //Listens out for the server broadcast and renders the message to the user
                 $('#messages').append($('<li>').text(`${msg.username} : ${msg.message} \n`));
             }); 
+
+            // $('#roombutton').click(function(){
+            //     var name = $('#roomname').val();
+            //     $('#roomname').val('');
+            //     socket.emit('create', name)
+            // });
 
         
         });
