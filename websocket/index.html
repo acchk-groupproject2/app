@@ -126,7 +126,7 @@
 
             <main>
 
-                <nav id='navbar'>Your name is <b><span id="username"></span></b>. Online Users: <span id="numUsers"></span></nav>
+                <nav id='navbar'>Your name is <b><span id="username"></span></b>. Users Online: <span id="numUsers"></span></nav>
                 <ul id="messages"></ul>
                 <form action="">
                     <input id="m" autocomplete="off" /><button>Send</button>
@@ -140,6 +140,16 @@
         <div class="flex-row">
 
             <aside>
+
+                <p>Your URL of photo: </p><input id="input1" type="text" placeholder="Your URL" value="http://www.asamnews.com/wp-content/uploads/2016/11/Trump-Donald6.jpg">
+                    
+                <button id="button1">Upload</button>
+
+                <p id="myLog"></p>
+
+                <!-- <button onclick="getSpotify()">Retrieve relevant music categories from Spotify</button>  -->
+                
+                <!-- <button onclick="reset()">Clear Image and Reset</button> -->
 
                 <h1 style="text-decoration: underline">Rooms</h1>
                 <ul id="rooms"></ul>
@@ -164,6 +174,110 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.slim.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script>
+
+        window.console = {
+            log: function(str){
+                var node = document.createElement("div");
+                node.appendChild(document.createTextNode(str));
+                document.getElementById("myLog").appendChild(node);
+            }
+            }
+
+        //Object variable for storing the URL endpoints
+		var emotions = {"anger": ["chill", "focus", "karaoke", "rock", "gaming", "metal", "punk"],
+						"contempt": ["decades", "travel", "inspirational", "classical"],
+						"disgust": ["freshfinds", "comedy", "dinner"],
+						"fear": ["j_tracks", "word", "workout"],
+						"happiness": ["cantopop", "mandopop", "kpop", "hiphop", "edm_dance", "country", "reggae", "jazz", "popculture"],
+						"neutral": ["pop", "cantopop", "mandopop", "country", "reggae", "rnb", "opm", "soul", "indie_alt", "family"],
+						"sadness": ["mood", "latin", "folk_americana", "blues", "brazilian", "french_variety", "romance"],
+						"surprise": ["party", "kpop", "rock", "karaoke"]
+						};
+
+		
+		var highest_key; //For storing the emotion with the highest index
+	
+    $("#button1").click(function() {
+        var params = { //Specifies all the JSON data to return (can leave blank)
+			"returnFaceId": "true",
+            "returnFaceLandmarks": "false",
+            "returnFaceAttributes": "age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,accessories,blur,exposure,noise",
+        };
+
+		var pictureURL = document.getElementById("input1").value;
+
+        $.ajax({
+
+            url: "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize?" + $.param(params),
+            beforeSend: function(xhrObj){
+
+                xhrObj.setRequestHeader("Content-Type","application/json");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","a9ccd90199684954b1d53482133f0c4a");
+            },
+            type: "POST",
+            // Request body
+            //data: '{"url": "https://media.licdn.com/mpr/mpr/shrinknp_200_200/AAEAAQAAAAAAAA2dAAAAJDE0NTY3ZWI5LWRjYzctNGJjMy05MGZlLWE2YWMwODQ4NWQ2Zg.jpg"}',
+			data: '{"url": ' + '"' + pictureURL + '"}',
+        })
+        .done(function(data) {
+
+            //console.log(JSON.stringify(data[0].scores));
+            
+            reset();
+
+			//Create an 'img' type element and then append it to the HTML
+			var img = document.createElement("img");
+            img.src = pictureURL;
+            img.width = '200';
+			var src = document.getElementById("myLog");
+			src.appendChild(img);
+
+			var keys = []; //For storing all the emotion keys
+			var highest = 0; //For storing the highest index
+
+			//Store all the emotions in "keys" array and find the one with highest index
+			$.each(data[0].scores, function(key, value) {
+				keys.push(key);
+				if (value > highest) {
+						highest = value;
+					}
+			});
+
+			
+			//Find the key with the highest index
+			$.each(data[0].scores, function(key, value) {
+				if (highest == value) {
+                    $('#myLog').append('<ul>' + "You have the highest index (" + highest + ") in " + key + "." + '</ul>');
+					//console.log("You have the highest index of " + highest + " in " + key + ".");
+                     //highest_key = key[0].toUpperCase + key.substring(1);
+                   highest_key = key; //Stores the highest key into the global variable for accessing later
+
+                    switchRoom(highest_key);
+
+					//Stopping at the emotion with the highest index to get the corresponding data in the 'emotions' object
+					// $.each(emotions, function(key2, value2) {
+					// 	if (key == key2) {
+					// 		console.log("Since you are in the state of " + key + ", you shall listen to the following music: " + value2);
+					// 	}
+
+					// })
+
+				}
+			})
+		
+        })
+        .fail(function() {
+            alert("error");
+        });
+    });
+
+        function reset() {
+        
+            document.getElementById("myLog").innerHTML = "";
+            
+        }	
+
+
         var socket = io();
 
 
