@@ -49,9 +49,6 @@ app.engine('handlebars', hb({
 
 app.set('view engine', 'handlebars');
 
-// var client_id = '63bdfd14444845c4a3caec523cad6680'; // Your client id
-// var client_secret = 'a68b21a863a44fe4b4c9be2668c94e52'; // Your secret
-
 var client_id = process.env.client_id;
 var client_secret = process.env.client_secret;
 
