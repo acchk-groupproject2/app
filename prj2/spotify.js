@@ -16,7 +16,6 @@ const client = redis.createClient({
 });
 app.use(express.static('public'));
 require('dotenv').config()
-// const faceAPI = '6d44a36bd34a41669b0b59ce2d0fe552';
 
 client.on('error', function(err){
     console.log(err);
@@ -49,8 +48,6 @@ app.engine('handlebars', hb({
 
 app.set('view engine', 'handlebars');
 
-// var client_id = '63bdfd14444845c4a3caec523cad6680'; // Your client id
-// var client_secret = 'a68b21a863a44fe4b4c9be2668c94e52'; // Your secret
 
 var client_id = process.env.client_id;
 var client_secret = process.env.client_secret;
@@ -62,11 +59,9 @@ passport.use(new SpotifyStrategy({
   },
   function(accessToken, refreshToken, profile, done) {
   process.nextTick(function () {
-     //store accesstoken in redis
      client.set(profile.username, accessToken, function(err, data) {
        if(err) {
            return console.log(err);
-           //set the key=username, accessToken=stringOfAccessToken;
        }
      })
      return done(null, profile);
