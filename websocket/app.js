@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 var userCount = 0;
 var usernames = {}; //Object variable for storing the usernames currently connected to the chat
 
-var rooms = ['Lobby', 'Angry', 'Contempt', 'Disgust', 'Happy', 'Neutral', 'Sad', 'Surprise'];
+var rooms = ['Lobby', 'anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise'];
 
 io.on('connection', (socket) => {
     //The .on method specifies the event 'connection' we are listening for
