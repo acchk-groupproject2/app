@@ -24,8 +24,10 @@ io.on('connection', (socket) => {
     //When the client emits 'adduser', the server listens and executes below
     socket.on('adduser', function(username) {
 
+        //Make name unique by adding an extra '2' and change name to unique name in green bar
         while (usernames.hasOwnProperty(username)) {
             username += "2";
+            socket.emit('checkname', username);
         }
     
         //First of all, we store the username in the socket session

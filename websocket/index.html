@@ -175,13 +175,13 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script>
 
-        window.console = {
-            log: function(str){
-                var node = document.createElement("div");
-                node.appendChild(document.createTextNode(str));
-                document.getElementById("username").appendChild(node);
-            }
-            }
+        // window.console = {
+        //     log: function(str){
+        //         var node = document.createElement("div");
+        //         node.appendChild(document.createTextNode(str));
+        //         document.getElementById("username").appendChild(node);
+        //     }
+        //     }
 
         //Object variable for storing the URL endpoints
 		var emotions = {"anger": ["chill", "focus", "karaoke", "rock", "gaming", "metal", "punk"],
@@ -251,8 +251,23 @@
 			$.each(data[0].scores, function(key, value) {
 				if (highest == value) {
                     $('#myLog').append('<ul>' + "You have scored the highest in the index of " + '<b>' + key + '</b>' + '</ul>');
-                    $('#myLog').append('<ul>' + "We hope you will enjoy chatting in the corresponding chatroom!");
-            
+                    
+                    if (key == 'anger' || key == 'contempt' || key == 'fear' || key == 'surprise') {
+                        $('#myLog').append('<ul>' + "We hope that you can be calm and neutral again!");
+                    }
+                    else if (key == 'disgust') {
+                        $('#myLog').append('<ul>' + "We hope that you will soon be back to a neutral state of mind again!");
+                    }
+                    else if (key == 'happiness') {
+                        $('#myLog').append('<ul>' + "Please help out people in the other chatrooms!");
+                    }
+                    else if (key == 'neutral') {
+                        $('#myLog').append('<ul>' + "We hope that you can elevate your mood more!");
+                    }
+                    else if (key == 'sadness') {
+                        $('#myLog').append('<ul>' + "We hope that you will soon be back to the state of happiness again!");
+                    }
+
                     switchRoom(key);
 
 					//Stopping at the emotion with the highest index to get the corresponding data in the 'emotions' object
@@ -296,12 +311,16 @@
                 username = prompt("Please enter your name");
             }
 
-            alert("Welcome to the Multifaceted Jukebox, " + username + "!");
-
             $('#username').html(username);
 
             //Emits an event 'adduser' and sends the user name to the server
             socket.emit('adduser', username);
+
+            //Makes sure name is also unique in the green bar, not just in the online user list
+            socket.on("checkname", function (data) {
+                console.log(data);
+                $('#username').html(data);
+            });
 
         });
 
