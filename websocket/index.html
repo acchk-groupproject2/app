@@ -143,7 +143,7 @@
 
             <aside>
 
-                <p>Instructions: Enter the URL of your photo for face analysis: </p><input id="input1" type="text" placeholder="Your URL" value="">
+                <p>Instructions: Enter the URL of your photo for face analysis: </p><input id="input1" type="text" placeholder="Your URL" value="http://megaexplorer.net/websocket/disgust.jpg">
                     
                 <button id="button1">Upload</button>
 
@@ -307,9 +307,10 @@
             }
             
             //If there is nothing stored in username, keep prompting for username
-            while (!valueIsSet(username)) {
+            
+            do {
                 username = prompt("Please enter your name");
-            }
+            } while (!valueIsSet(username));
 
             $('#username').html(username);
 
@@ -318,7 +319,6 @@
 
             //Makes sure name is also unique in the green bar, not just in the online user list
             socket.on("checkname", function (data) {
-                console.log(data);
                 $('#username').html(data);
             });
 
