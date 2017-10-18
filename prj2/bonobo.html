@@ -3,18 +3,63 @@
 <head>
 	<title>Still capture demo</title>
 	<meta charset='utf-8'>
-
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="jquery.min.js"></script>
+  <link href='https://fonts.googleapis.com/css?family=Neucha' rel='stylesheet'>
 </head>
+<style>
+        body{
+          background-color: #ffe6e6;
+          text-align: center;
+          font-family: 'Neucha'
+        }
+        .camera{
+          margin: 50px 0px 50px 0px;
+          border-radius: 20px;
+        }
+        #startbutton{
+          height: 70px;
+          width: 200px;
+          background: #D9A88F;
+          font-family: 'Neucha';
+          font-size: 30px;
+          border-radius: 10px;
+          margin-top: 10px;
+        }
+        #canvas{
+          margin-top: 10px; 
+        }
+        #yourPhoto{
+          font-family: 'Neucha';
+          font-size: 36px;
+          color: #6A7D8E;
+          text-align: center;
+        }
+        #stepOne{
+          font-family: 'Neucha';
+          font-size: 43px;
+          color: #5E7703;
+          text-align: center;
+        }
+</style>
 <body>
+  <div id='stepOne'>
+    Step 1: Take Photo
+  </div>
   <div class="camera">
     <video id="video">Video stream not available.</video>
+    </br>
     <button id="startbutton">Take photo</button> 
   </div>
-  <canvas id="canvas">
-  </canvas>
-<div class="output"> 
+  <div id='yourPhoto'>
+    Here is your photo, wait:
+  </div>
+   <canvas id="canvas">
+  </canvas> 
+<!-- <div class="output"> 
     <img id="photo" alt = "Capture will appear here">
-</div>
+</div> -->
 <script>
 (function() {
 
@@ -29,6 +74,8 @@
   var canvas = null;
   var photo = null;
   var startbutton = null;
+
+  var imageLink;
 
   function startup() {
     video = document.getElementById('video');
@@ -79,6 +126,10 @@
     startbutton.addEventListener('click', function(ev){
       takepicture();
       ev.preventDefault();
+        setTimeout(function () {
+      // after 2 seconds
+        window.location = "/processphoto";
+        }, 2000)
     }, false);
     
     clearphoto();
@@ -91,7 +142,7 @@
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     var data = canvas.toDataURL('image/png');
-    photo.setAttribute('src', data);
+    // photo.setAttribute('src', data);
   }
 
   function takepicture() {
@@ -102,11 +153,19 @@
       context.drawImage(video, 0, 0, width, height);
     
       var data = canvas.toDataURL('image/png');
-      photo.setAttribute('src', data);
+      var imageLink = data;
+        $.ajax({
+        method: 'POST',
+        url: '/check',
+        data: {'64': imageLink}
+        })
+      // photo.setAttribute('src', data);
     } else {
       clearphoto();
     }
   }
+
+
 
   window.addEventListener('load', startup, false);
 })();

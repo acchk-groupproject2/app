@@ -1,31 +1,13 @@
-<div>
-
- <form action="/listenmusic">
-    <input type='submit' value='listen'>
-</form> 
-
-<form action="/">
-    <input type='submit' value='home'>
-</form> 
-
-<form action="/takephoto" method="GET">
-    <input type='submit' value='Take Photo'>
-</form>
-
-<form action="/checkphoto" method="GET">
-    <input type='submit' value='Check photo'>
-</form>
-
-<form action="/check" method="GET">
-    <input type='submit' value='Check'>
-</form>
-
-
-<div>
+<div id='userInfo'>
     Welcome back, {{id}}
 </div>
-<div>
-    your birthdate: {{birthdate}}
-</div>
 
-</div>
+
+<form action="/checkphoto" method="GET">
+    <input type='submit' value='Start' id='startApp'>
+</form>
+
+<ul id='userRules'>
+    <li id='userRules'>Read Your Emotion From A Instant Photo Of You</li>
+    <li id='userRules'>Play the music for you according to your mood</li>
+</ul>

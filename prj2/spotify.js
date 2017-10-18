@@ -16,6 +16,9 @@ const client = redis.createClient({
 });
 const base64Img = require('base64-img');
 
+app.use(bodyParser.json({limit: "50mb"}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+
 app.use(express.static('public'));
 require('dotenv').config()
 
@@ -118,6 +121,7 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
         userPlaylist.data.items.forEach((n)=>{
           if(n.name === "My Mood Now"){
             location = n.href;
+            console.log(n);
             return havePlaylist = true;
           }
         })
@@ -132,11 +136,10 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
             'public': false 
             }
           })
-          .then( (appPlaylist) => {location = appPlaylist.headers.location;}).catch((err)=>{console.log(err);})
+          .then( (appPlaylist) => {location === appPlaylist.headers.location;}).catch((err)=>{console.log(err);})
       }}).then(()=>{
-            let yourEmotionState = req.user.id + '_emotion';
-            client.get(yourEmotionState, (err, songCategory)=>{
-            
+            let yourMusicType = req.user.id + '_musicType';
+            client.get(yourMusicType, (err, songCategory)=>{
             axios({
               method: "GET",
               url: `https://api.spotify.com/v1/browse/categories/${songCategory}/playlists`,
@@ -153,9 +156,8 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
                 let theTempList = [];
                 // let theTempListDetail = req.user.id + '_tempList';
                 getANewSong(desireTrack);
-                getANewSong(desireTrack);
-                getANewSong(desireTrack);
-                setTimeout(deleteSong, totalTime)
+                // getANewSong(desireTrack);
+                // getANewSong(desireTrack);
 
                 function getANewSong (desireTrack){
                   var randomNumber = Math.floor(Math.random()*(desireTrack.data.items.length-1));
@@ -167,15 +169,24 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
                   min = Math.floor(min);
                   // console.log(min+':'+sec);
                   totalTime += ms;
+                  // console.log(desireTrack.data.items[randomNumber].track);
                   let randomTrack = desireTrack.data.items[randomNumber].track.uri;
+                  let trackName = desireTrack.data.items[randomNumber].track.name;
                   // theTempList += (randomTrack + ',');
-                  theTempList.push(randomTrack)
+                  theTempList.push(trackName);
+                  let theTempSongList = theTempList;
+                  // let recommendSongs = req.user.id+'_recSong'
+                  // client.set(recommendSongs, theTempList, (err,data)=>{
+                  //   if(err){
+                  //     console.log('ERRor in saving the tracks names')
+                  //   }
+                  // })
                   let trackUrl = randomTrack.replace(':', '%3A')
                   axios({
                     method: 'POST',
                     url: `${location}/tracks?uris=${trackUrl}`,
                     headers: {Authorization: 'Bearer '+ response}
-                  })
+                  }).then((response)=>{console.log('Success Insert')}).catch((err)=>{console.log('cannot insert the songs' + err.data)})
                 }
 
                 function deleteSong(){
@@ -183,48 +194,90 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
                     method: 'DELETE',
                     url: `${location}/tracks`,
                     headers: {Authorization: 'Bearer '+ response},
-                    data: {'tracks': [{'uri': theTempList[0], 'positions':[0]}, {'uri': theTempList[1], 'positions':[1]}, {'uri': theTempList[2], 'positions':[2]}]}
-                  }).then((response)=>{console.log('Removed Tracks')}).catch((err)=>{console.log('ERROR is deleting the song')})
+                    data: {'tracks': [{'uri': theTempList[0]}/*, {'uri': theTempList[1], 'positions':[1]}, {'uri': theTempList[2], 'positions':[2]}*/]}
+                  }).then((response)=>{console.log('Removed Tracks')}).catch((err)=>{console.log('ERROR in deleting the song' +err)})
                 }
+
+                setTimeout(deleteSong, totalTime)
 
                 client.set(yourSongTime, totalTime, (err,data)=>{
                   if(err){
                     console.log('ERROR is saving songTime');
                   }
                 })
+
+                let recommendSongs = req.user.id+'_recSong'
+                  client.set(recommendSongs, theTempList, (err,data)=>{
+                    if(err){
+                      console.log('ERRor in saving the tracks names')
+                    }
+                })
               }).catch((err)=>{
-                console.log('"ERROR in getting a track');
+                console.log('"ERROR in getting a track' + err);
               })
             }).catch((err)=>{console.log(err)});
             })
       }).catch((err)=>{
         console.log(err);
       })
+    let recommendSongs = req.user.id+'_recSong'
+    client.get(recommendSongs, (err, data)=>{
+      let theMusicRecommend = data
+      res.render('addedmusic', {'music': theMusicRecommend});
+    })
   })
-  res.render('home');
 })
 
 //take photo (1. showing, only for window // 2.not showing, only for mac)
 app.get('/takephoto', ensureAuthenticated, (req,res)=>{
-  setTimeout(takePhoto, 2000);
-  setTimeout(deleteImage, 23000);
+
+  let username = req.user.id;
+  setTimeout(
+    function (){
+      let username = req.user.id;
+      imagesnapjs.capture(`./public/photo_${username}.jpg`, { cliflags: '-w 2'}, function(err) {
+        console.log(err ? err : 'Success!');
+      });
+    }
+  , 2000)
+
+  setTimeout(
+    function (){
+      let username = req.user.id;
+      var path = `./public/photo_${username}.jpg`;
+      fs.unlink(path, (err)=>{
+        if(err){
+          console.log(err);
+        } else {
+          console.log('The file is deleted');
+        }
+      });
+    }
+  , 23000)
+
+  // setTimeout(takePhoto, 2000);
+  // setTimeout(deleteImage, 23000);
   res.sendFile('takeyourphoto.html',  { root : __dirname})
 })
 
 app.get('/processingphoto', ensureAuthenticated, (req,res)=>{
-  res.sendFile('processingphoto.html',  { root : __dirname});
+  let username = 'photo_'+req.user.id+'.jpg';
+  res.render('processingphoto', {'image': username})
+  // res.sendFile('processingphoto.html',  { root : __dirname});
 })
 
 app.get('/processphoto', ensureAuthenticated, (req,res)=>{
   var imgLink;
   var deleteHash;
-  base64Img.base64('./public/photo.jpg', function(err, data) {
-    var log = data.replace('data:image/jpg;base64,/', '/');
+  let youPhotoName = req.user.id +'_photo'
+  client.get(youPhotoName, (err, photobase64)=>{
+  // base64Img.base64(`./public/photo_${req.user.id}.jpg`, function(err, data) {
+  //   var log = data.replace('data:image/jpg;base64,/', '/');
     axios({
     method: 'POST',
     url: 'https://api.imgur.com/3/upload',
     headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
-    data: {'image': `${log}`}
+    data: {'image': `${photobase64}`}
     }).then((response)=>{
       imgLink = response.data.data.link;
       deleteHash = response.data.data.deletehash;
@@ -236,6 +289,9 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
       data: {'url':`${imgLink}`}
       }).then((emotion)=>{
         console.log(emotion.data[0].scores);
+        // if(emotion.data.length === 0){
+        //   res.redirect('/noface');
+        // }
         let emotionData = emotion.data[0].scores;
         let mainEmotion = Object.keys(emotionData).reduce((first, second)=>{
           if(emotionData[first] > emotionData[second]){
@@ -255,11 +311,19 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
           'sadness': ['mood', 'chill', 'kpop'],
           'surprise': ['party', 'funk', 'edm_dance']
         }
+        
         musicType = musicYouNeed[mainEmotion][Math.floor(Math.random()*(musicYouNeed[mainEmotion].length))]
-        let yourEmotionState = req.user.id + '_emotion'
-        client.set(yourEmotionState, musicType, function(err, data){
+        let yourEmotionState = req.user.id + '_emotion';
+        client.set(yourEmotionState, mainEmotion, (err,data)=>{
           if(err){
-            console.log("CANNOT SAVE the emotion");
+            console.log('CANNOT SAVE your main emotion');
+          }
+        })
+        let yourMusicType = req.user.id + '_musicType';
+        console.log(musicType)
+        client.set(yourMusicType, musicType, function(err, data){
+          if(err){
+            console.log("CANNOT SAVE the musicType");
           }
         })
       }).then(()=>{
@@ -267,29 +331,34 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
         method: 'DELETE',
         url: `https://api.imgur.com/3/image/${deleteHash}`,
         headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`}
-        }).then((res)=>{console.log("image deleted")}).catch((err)=>{console.log('Err yuen mei')})
-      }).catch((err)=>{console.log('ERROR in uploading image to emotion API' + err)})
+        }).then(()=>{
+          console.log("image deleted");
+          // return res.redirect('/login');
+          let yourEmotionState = req.user.id+ '_emotion';
+          let yourMusicType = req.user.id + '_musicType';
+          client.get(yourEmotionState, (err, data1)=>{
+            client.get(yourMusicType, (err, data2)=>{
+              res.render('image', {'emotion': data1, 'music':data2});
+            })
+          })
+        }).catch((err)=>{console.log('Err yuen mei' + err)})
+      }).catch((err)=>{console.log('No FACE~~~~!!!' ); return res.render('noface')})
     }).catch((err)=>{console.log("ERROR in uploading and deleting")});
   })
-  res.render('image');
+})
+
+app.get('/noface', ensureAuthenticated, (req,res)=>{
+  res.render('noface');
 })
 
 //get the happiness index
 app.get('/checkphoto', ensureAuthenticated, (req,res)=>{
-  base64Img.base64('smile.jpg', function(err, data) {
-  axios({
-    method: "POST",
-    url: 'https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize',
-    host: 'westus.api.cognitive.microsoft.com',
-    headers: {'Ocp-Apim-Subscription-Key': process.env.faceAPI},
-    data: {'url':`${data}`}
-  }).then((result)=>{console.log(result)}).catch((err)=>{console.log('ERROR')})
-  res.render('home'); 
-  })
+  res.sendFile('bonobo.html',  { root : __dirname})
 })
 
 app.get('/check', ensureAuthenticated, (req,res)=>{
-  res.sendFile('capture.html',  { root : __dirname})
+  // res.sendFile('capture.html',  { root : __dirname})
+  res.render('home')
 })
 
 app.post('/check', ensureAuthenticated, (req,res)=>{
@@ -299,14 +368,14 @@ app.post('/check', ensureAuthenticated, (req,res)=>{
     if(err){
       console.log('ERROR in client set photo')
     }
-    client.get(youPhotoName, (err,photoLink)=>{
-      axios({
-        method: 'POST',
-        url: 'https://api.imgur.com/3/upload',
-        headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
-        data: {'image': `${photoLink}`}
-      }).then((response)=>{console.log(response)}).catch((err)=>{console.log('ERROR in saving image token')})
-    })
+    // client.get(youPhotoName, (err,photoLink)=>{
+    //   axios({
+    //     method: 'POST',
+    //     url: 'https://api.imgur.com/3/upload',
+    //     headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
+    //     data: {'image': `${photoLink}`}
+    //   }).then((response)=>{console.log(response)}).catch((err)=>{console.log('ERROR in saving image token')})
+    // })
   })
   res.redirect('/check');
 })
@@ -316,27 +385,26 @@ app.post('/check', ensureAuthenticated, (req,res)=>{
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
   else {
-    // res.redirect('/callback');
     res.redirect('/auth/spotify')
   }
 }
 
-function takePhoto (){
-  imagesnapjs.capture('./public/photo.jpg', { cliflags: '-w 2'}, function(err) {
-    console.log(err ? err : 'Success!');
-  });
-}
+// function takePhoto (req){
+//   imagesnapjs.capture(`./public/photo_${req.user.id}.jpg`, { cliflags: '-w 2'}, function(err) {
+//     console.log(err ? err : 'Success!');
+//   });
+// }
 
-function deleteImage(){
-  var path = './public/photo.jpg';
-  fs.unlink(path, (err)=>{
-    if(err){
-      console.log(err);
-    } else {
-      console.log('The file is deleted');
-    }
-  });
-}
+// function deleteImage(req){
+//   var path = `./public/photo_${req.user.id}.jpg`;
+//   fs.unlink(path, (err)=>{
+//     if(err){
+//       console.log(err);
+//     } else {
+//       console.log('The file is deleted');
+//     }
+//   });
+// }
 
 
 app.listen(3000);

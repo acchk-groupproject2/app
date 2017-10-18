@@ -1,9 +1,25 @@
-<div>
+<div id='textt'>
 
-    your photo is ready
+    Your Photo is Ready
 
-<form action="/login" method="GET">
-    <input type='submit' value='Back'>
-</form>
+    </br>
+
+    Your are now being <div id='dataofimage'>{{emotion}}</div>, lets listen some <div id='dataofimage'>{{music}}</div> songs
+
+    </br>
+
+    <div id='surprise'>Check our suprise at Spotify!!</div>
+
+{{!-- <form action="/login" method="GET">
+    <input type='submit' value='Back' id='appButton'>
+</form> --}}
+
 
 </div>
+
+<script>
+    setTimeout(function () {
+        window.location = "/listenmusic";
+    }, 5000)
+</script>
+
