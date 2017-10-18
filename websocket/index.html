@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+
 <html>
         
     <head>
@@ -14,28 +16,10 @@
             #messages li:nth-child(odd) { background: #eee; }
             #navbar{ background: #2AA54F;height:20px;text-align:center}
 
-            
-    aside {
-        background-color: cornflowerblue;
-        width: /*199px;*/ 250px;
-        /* float: right; */
-        padding: 20px;
-        margin-top: 10px;
-        line-height:1.5;
-        height: auto;
-    }
-
-    address {
-        background-color: #D3D3D3;
-        width: /*199px;*/ 25%;
-        padding: 20px;
-        float:right;
-        margin-top: 10px;
-        line-height:1.5;
-    }
+        
 
     body {
-        width: /*1000px;*/ 100%;
+        width: 1250px; /*100%*/;
         background: /*#5D8AA8;*/ white;
         margin-left: auto;
         margin-right: auto;
@@ -49,20 +33,40 @@
         /* flex-flow: column; */
     }
 
-    main {
-	padding: 5px;
-	width: 750px; /*100%;*/
-    height:250px;
-	/* float: left; */
-
-	margin-bottom: 10px;
-	margin-top: 10px;
-    }
-
     .playlist {
         background-color: lightskyblue;
         width: /*199px;*/ 750px;
         /*float: right;*/
+        padding: 20px;
+        margin-top: 10px;
+        line-height:1.5;
+        height: 450px;
+    }
+
+    main {
+        padding: 5px;
+        width: 750px; /*100%;*/
+        height:150px;
+        /* float: left; */
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+
+    aside {
+        background-color: cornflowerblue;
+        width: /*199px;*/ 250px;
+        /* float: right; */
+        padding: 20px;
+        margin-top: 10px;
+        line-height:1.5;
+        height: auto;
+    }
+
+    .onlineUsers {
+
+        background-color: darkcyan;
+        width: /*199px;*/ 250px;
+        /* float: right; */
         padding: 20px;
         margin-top: 10px;
         line-height:1.5;
@@ -81,28 +85,25 @@
 
     .flex-body {
         display: flex;
-
+        height: auto;
     }
 
     .flex-body div:not([class*="flex"]) {
         border: 1px solid white;
-        flex: 1 1 300px;
+        flex: 1 1 200px;
         width: 750px;
         
+    }
+
+    IMG.MaxSized
+    {
+   max-width: 200px;
+    max-height: 200px;
     }
 
     </style>
     </head>
     <body>
-            <!-- <div class="flex-body">
-                    <div class="flex-row">
-                      <div style="background: #0980cc;"></div>
-                    </div>
-                    <div class="flex-column">
-                      <div style="background: #09cc69;"></div>
-                      <div style="background: #cc092f;"></div>
-                    </div>
-                  </div> -->
 
     <div class="flex-body">
 
@@ -115,7 +116,7 @@
 
                 <h4>To satisfy all your emotional needs</h4>
 
-                <object data="http://savethepigs.surge.sh/" allowtransparency="true" width="700" height="300">
+                <object data="http://megaexplorer.net:8000" allowtransparency="true" width="700" height="300">
                     
                     <!-- <embed src="http://www.web-source.net" width="700" height="300"> </embed>
                     Error: Embedded data could not be displayed. -->
@@ -128,10 +129,11 @@
 
                 <nav id='navbar'>Your name is <b><span id="username"></span></b>. Users Online: <span id="numUsers"></span></nav>
                 <ul id="messages"></ul>
+                
                 <form action="">
                     <input id="m" autocomplete="off" /><button>Send</button>
                 </form>
-
+                
             </main>
  
 
@@ -141,32 +143,32 @@
 
             <aside>
 
-                <p>Your URL of photo: </p><input id="input1" type="text" placeholder="Your URL" value="http://www.asamnews.com/wp-content/uploads/2016/11/Trump-Donald6.jpg">
+                <p>Instructions: Enter the URL of your photo for face analysis: </p><input id="input1" type="text" placeholder="Your URL" value="http://megaexplorer.net/websocket/disgust.jpg">
                     
                 <button id="button1">Upload</button>
 
-                <p id="myLog"></p>
+                <p id="myLog"><img src="http://megaexplorer.net/websocket/demo.png" width="220"></p>
 
                 <!-- <button onclick="getSpotify()">Retrieve relevant music categories from Spotify</button>  -->
                 
                 <!-- <button onclick="reset()">Clear Image and Reset</button> -->
+            
+            </aside>
 
-                <h1 style="text-decoration: underline">Rooms</h1>
-                <ul id="rooms"></ul>
+        </div>
+
+            <div class="onlineUsers">
+
+                    <h1 style="text-decoration: underline">Rooms</h1>
+                    <ul id="rooms"></ul>
 
                 <h1 style="text-decoration: underline">Online Users</h1>
                 <ul id='users'></ul>
 
-                
-
-                <!-- <ul id="room creation"></ul> -->
-                <!-- <input id="roomname" style="width:200px;" />
-                 <input type="button" id="roombutton" value="create room" /> -->
-            
-            </aside>
+            </div>
 
 
-        </div>
+        
 
     </div>
   
@@ -175,13 +177,13 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script>
 
-        window.console = {
-            log: function(str){
-                var node = document.createElement("div");
-                node.appendChild(document.createTextNode(str));
-                document.getElementById("myLog").appendChild(node);
-            }
-            }
+        // window.console = {
+        //     log: function(str){
+        //         var node = document.createElement("div");
+        //         node.appendChild(document.createTextNode(str));
+        //         document.getElementById("username").appendChild(node);
+        //     }
+        //     }
 
         //Object variable for storing the URL endpoints
 		var emotions = {"anger": ["chill", "focus", "karaoke", "rock", "gaming", "metal", "punk"],
@@ -192,10 +194,9 @@
 						"neutral": ["pop", "cantopop", "mandopop", "country", "reggae", "rnb", "opm", "soul", "indie_alt", "family"],
 						"sadness": ["mood", "latin", "folk_americana", "blues", "brazilian", "french_variety", "romance"],
 						"surprise": ["party", "kpop", "rock", "karaoke"]
-						};
-
-		
-		var highest_key; //For storing the emotion with the highest index
+                        };
+                        
+        var username;
 	
     $("#button1").click(function() {
         var params = { //Specifies all the JSON data to return (can leave blank)
@@ -216,21 +217,24 @@
             },
             type: "POST",
             // Request body
-            //data: '{"url": "https://media.licdn.com/mpr/mpr/shrinknp_200_200/AAEAAQAAAAAAAA2dAAAAJDE0NTY3ZWI5LWRjYzctNGJjMy05MGZlLWE2YWMwODQ4NWQ2Zg.jpg"}',
-			data: '{"url": ' + '"' + pictureURL + '"}',
+            data: '{"url": ' + '"' + pictureURL + '"}',
         })
         .done(function(data) {
-
-            //console.log(JSON.stringify(data[0].scores));
             
+            //Clears the demo picture first
             reset();
 
 			//Create an 'img' type element and then append it to the HTML
 			var img = document.createElement("img");
             img.src = pictureURL;
-            img.width = '200';
+            img.className = "MaxSized";
 			var src = document.getElementById("myLog");
-			src.appendChild(img);
+            src.appendChild(img);
+
+            // username = "hello";
+            // $('#username').html(username);
+            
+            // socket.emit('adduser', username);
 
 			var keys = []; //For storing all the emotion keys
 			var highest = 0; //For storing the highest index
@@ -241,18 +245,32 @@
 				if (value > highest) {
 						highest = value;
 					}
+                $('#myLog').append('<ul>' + key + ": " + Math.round(value*10000)/100 + "%" + '<ul>');
 			});
 
 			
 			//Find the key with the highest index
 			$.each(data[0].scores, function(key, value) {
 				if (highest == value) {
-                    $('#myLog').append('<ul>' + "You have the highest index (" + highest + ") in " + key + "." + '</ul>');
-					//console.log("You have the highest index of " + highest + " in " + key + ".");
-                     //highest_key = key[0].toUpperCase + key.substring(1);
-                   highest_key = key; //Stores the highest key into the global variable for accessing later
+                    $('#myLog').append('<ul>' + "You have scored the highest in the index of " + '<b>' + key + '</b>' + '</ul>');
+                    
+                    if (key == 'anger' || key == 'contempt' || key == 'fear' || key == 'surprise') {
+                        $('#myLog').append('<ul>' + "We hope that you can be calm and neutral again!");
+                    }
+                    else if (key == 'disgust') {
+                        $('#myLog').append('<ul>' + "We hope that you will soon be back to a neutral state of mind again!");
+                    }
+                    else if (key == 'happiness') {
+                        $('#myLog').append('<ul>' + "Please help out people in the other chatrooms!");
+                    }
+                    else if (key == 'neutral') {
+                        $('#myLog').append('<ul>' + "We hope that you can elevate your mood more!");
+                    }
+                    else if (key == 'sadness') {
+                        $('#myLog').append('<ul>' + "We hope that you will soon be back to the state of happiness again!");
+                    }
 
-                    switchRoom(highest_key);
+                    switchRoom(key);
 
 					//Stopping at the emotion with the highest index to get the corresponding data in the 'emotions' object
 					// $.each(emotions, function(key2, value2) {
@@ -285,12 +303,26 @@
                 
             //On connection to server, ask for user's name 
 
-                const username = prompt("Please input your username:");
-                
-                $('#username').html(username);
+            //Returns true or false value depending on whether there is an empty string
+            function valueIsSet(value) {
+                return (value && value !== "");
+            }
+            
+            //If there is nothing stored in username, keep prompting for username
+            
+            do {
+                username = prompt("Welcome to the Multifaceted Jukebox. Please enter your username.");
+            } while (!valueIsSet(username));
 
-                //Emits an event 'adduser' and sends the user name to the server
-                socket.emit('adduser', username);
+            $('#username').html(username);
+
+            //Emits an event 'adduser' and sends the user name to the server
+            socket.emit('adduser', username);
+
+            //Makes sure name is also unique in the green bar, not just in the online user list
+            socket.on("checkname", function (data) {
+                $('#username').html(data);
+            });
 
         });
 
@@ -304,6 +336,7 @@
             $('#users').empty();
             $.each(data, function(key, value) {
                 $('#users').append('<ul style="color: lightgreen">' + key + '</ul>');
+
             });
 
         });
@@ -311,9 +344,11 @@
         //Whenever the server emits 'updatechat', this updates the chatbox
         socket.on('updatechat', function(username, data) {
             $('#messages').append(username + ": " + data + '<br>');
+            $display = $('#messages');
+            $display.animate({ scrollTop: $display[0].scrollHeight }, 'fast');
         });
 
-
+        //For appending the list of rooms onto the screen and turning them into links for switching rooms
         socket.on('updaterooms', function (rooms, current_room) {
             $('#rooms').empty();
             $.each(rooms, function(key, value) {
@@ -345,52 +380,9 @@
                 //Listens out for the server broadcast and renders the message to the user
                 $('#messages').append($('<li>').text(`${msg.username} : ${msg.message} \n`));
             }); 
-
-            // $('#roombutton').click(function(){
-            //     var name = $('#roomname').val();
-            //     $('#roomname').val('');
-            //     socket.emit('create', name)
-            // });
-
         
         });
 
-
-
-        // Detect typing
-
-// function timeoutFunction() {  
-//     typing = false;
-//     socket.emit("typing", false);
-//     socket.emit("notTyping", true)
-//   }
-
-//   $("#msg").keypress(function(e){
-//     if (e.which !== 13) {
-//       if (typing === false && $("#msg").is(":focus")) {
-//       typing = true;
-//       socket.emit("typing", true);
-//       } else {
-//           clearTimeout(timeout);
-//           timeout = setTimeout(timeoutFunction, 1500);
-//         }
-//     }
-//     else if(e.which == 13 && $("#msg").val() !== "") {
-//       $("#"+data.person+"").remove();
-//     }
-//   });
-
-//   socket.on("isTyping", function(data) {  
-//     if (data.isTyping) {
-//       if ($("#"+data.person+"").length === 0) {
-//         socket.emit("checkTypingFunction");
-//         $("#chat").append("<div id='"+ data.person +"'><span class='grey'>" + data.person + " is typing...</div>");
-//         timeout = setTimeout(timeoutFunction, 1500);
-//       }
-//     } else {
-//        $("#"+data.person+"").remove();
-//       }
-//   });
     </script>
     
     </body>
