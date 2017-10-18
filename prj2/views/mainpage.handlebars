@@ -1,7 +1,37 @@
+
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+<style>
+    .mySlides {
+        display:none;
+    }
+
+</style>
+
 <div>
 
 {{!-- <button type="button" class='login' >Login </button>
 <button type="button" class='signup'>Sign Up</button> --}}
+
+<h1>The Multifaceted Jukebox</h1>
+
+<p>Welcome to the Multifaceted Jukebox, a place where you can listen to music that suits your mood and 
+    connect with others who are in the same emotional state.  We believe that every once in a while, 
+    people need to take some time off to relax and let things out of their system, before they can be 
+    back to the state of happiness where they are full of energy again.  We are an organisation of people 
+    who are passionate about alleviating people's emotional pain in their lives by creating new technologies, 
+    as well as being great listeners to people's concerns. We hope to make the world a better place by 
+    building an internet community full of love and harmony.</p>
+
+
+<div class="w3-content w3-section w3-center" style="max-width:900px; max-height:460px">
+    <img class="mySlides" src="http://megaexplorer.net/mfjdemo.jpg" width="900" height="460px">
+    <img class="mySlides" src="http://megaexplorer.net/trump.jpg" width="900" height="460px">
+{{!-- 
+  <img class="mySlides" src="img_la.jpg" style="width:100%">
+  <img class="mySlides" src="img_ny.jpg" style="width:100%">
+  <img class="mySlides" src="img_chicago.jpg" style="width:100%"> --}}
+</div>
 
 <form action="/auth/spotify" method="GET">
     <input type='submit' value='Sign Up'>
@@ -13,3 +43,21 @@
 
 
 </div>
+
+<script>
+    var myIndex = 0;
+    carousel();
+
+    function carousel() {
+        var i;
+        var x = document.getElementsByClassName("mySlides");
+        for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none";  
+        }
+        myIndex++;
+        if (myIndex > x.length) {myIndex = 1}    
+        x[myIndex-1].style.display = "block";  
+        setTimeout(carousel, 2000); // Change image every 2 seconds
+    }
+
+</script>
