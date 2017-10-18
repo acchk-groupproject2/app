@@ -10,6 +10,9 @@ const SpotifyStrategy = require('passport-spotify').Strategy;
 const redis = require('redis');
 const imagesnapjs = require('imagesnapjs');
 const fs = require('fs');
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
 const client = redis.createClient({
     host: 'localhost',
     port: 6379
@@ -49,14 +52,17 @@ app.engine('handlebars', hb({
 
 app.set('view engine', 'handlebars');
 
+var client_id = "8fbb168b35ee49e0a618cc027b88604d";
 
-var client_id = process.env.spotify_client_id;
-var client_secret = process.env.spotify_client_secret;
+var client_secret = "1236d263c4ec4276a3eb062c811d85fb";
+
+// var client_id = process.env.spotify_client_id;
+// var client_secret = process.env.spotify_client_secret;
 
 passport.use(new SpotifyStrategy({
     clientID: client_id,
     clientSecret: client_secret,
-    callbackURL: "http://localhost:3000/callback"
+    callbackURL: "http://megaexplorer.net:3000/callback"
   },
   function(accessToken, refreshToken, profile, done) {
   process.nextTick(function () {
@@ -312,6 +318,95 @@ app.post('/check', ensureAuthenticated, (req,res)=>{
 })
 
 
+app.get('/chatroom', ensureAuthenticated, (req, res) => {
+  //The server only serves one file, the index.html file.
+  res.sendFile(__dirname + '/index.html');
+});
+
+var userCount = 0;
+var usernames = {}; //Object variable for storing the usernames currently connected to the chat
+
+var rooms = ['Lobby', 'anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise'];
+
+io.on('connection', (socket) => {
+  
+  //Increases counter and emits the userCount event
+  userCount++;
+  io.emit('userCount', {userCount: userCount});
+
+  //When the client emits 'adduser', the server listens and executes below
+  socket.on('adduser', function(username) {
+
+      //Make name unique by adding an extra '2' and change name to unique name in green bar
+      while (usernames.hasOwnProperty(username)) {
+          username += "2";
+          socket.emit('checkname', username);
+      }
+  
+      //First of all, we store the username in the socket session
+      socket.username = username;
+
+      //We also store the room's name in the socket session
+      socket.room = 'Lobby'; 
+
+      // Then add the client's username to the global usernames variable
+      usernames[username] = username;
+
+      //The first room to join on connecting
+      socket.join('Lobby');
+      
+      //Update the list of users in the chat on the client's side
+      io.sockets.emit('updateusers', usernames);
+
+      //Echo to client that they have connected
+      socket.emit('updatechat', 'SERVER', 'you have connected to Lobby');
+
+      //Broadcast to all other clients that a user has connected
+      socket.broadcast.to('Lobby').emit('updatechat', 'SERVER', username + ' has connected to this room');
+
+      //Updates the room list with the current room as 'Lobby'
+      socket.emit('updaterooms', rooms, 'Lobby');
+  });
+
+  //Only allows chat function to be broadcasted to each specific room
+  socket.on('sendchat', function(data) {
+      io.sockets["in"](socket.room).emit('updatechat', socket.username, data);
+  });
+  
+  //Listens for 'switchRoom' event from the client then broadcasts the relevant messages and updates room list
+  socket.on('switchRoom', function(newroom) {
+      var oldroom;
+      oldroom = socket.room;
+      socket.leave(socket.room);
+      socket.join(newroom);
+      socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
+      socket.broadcast.to(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room');
+      socket.room = newroom;
+      socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room');
+      socket.emit('updaterooms', rooms, newroom);
+  });
+
+  socket.on('disconnect', () => {
+
+      //Remove the username from the global usernames variable
+      delete usernames[socket.username];
+      //Update the list of users the the chat on the client-side
+      io.sockets.emit('updateusers', usernames);
+
+      //Broadcast to all other clients that a user has left.
+      socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
+       
+      //Decreases counter on disconnect and emits another userCount event
+      userCount--;
+      io.emit('userCount', { userCount: userCount });
+
+      socket.leave(socket.room);
+  });
+
+
+});
+
+
 //callback functions
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
@@ -338,5 +433,8 @@ function deleteImage(){
   });
 }
 
+http.listen(3000);
 
-app.listen(3000);
+
+
+//app.listen(3000);
