@@ -14,13 +14,14 @@ const client = redis.createClient({
     host: 'localhost',
     port: 6379
 });
+const base64Img = require('base64-img');
+
 app.use(express.static('public'));
 require('dotenv').config()
 
 client.on('error', function(err){
     console.log(err);
 });
-
 
 passport.serializeUser(function(user, done) {
   done(null, user);
@@ -49,24 +50,24 @@ app.engine('handlebars', hb({
 app.set('view engine', 'handlebars');
 
 
-var client_id = process.env.client_id;
-var client_secret = process.env.client_secret;
+var client_id = process.env.spotify_client_id;
+var client_secret = process.env.spotify_client_secret;
 
 passport.use(new SpotifyStrategy({
     clientID: client_id,
     clientSecret: client_secret,
-    callbackURL: "http://localhost:8000/callback"
+    callbackURL: "http://localhost:3000/callback"
   },
   function(accessToken, refreshToken, profile, done) {
   process.nextTick(function () {
      client.set(profile.username, accessToken, function(err, data) {
        if(err) {
-           return console.log(err);
+           return console.log("Error in saving accessToken");
        }
      })
      return done(null, profile);
   });
-  }));
+}));
   
 
 app.get('/auth/spotify',
@@ -76,8 +77,8 @@ app.get('/auth/spotify',
   function(req, res){});
 
 app.get('/callback',
-  passport.authenticate('spotify', { failureRedirect: '/login' }),
-  function(req, res) {res.redirect('/login');})
+  passport.authenticate('spotify', { failureRedirect: '/home' }),
+  function(req, res) { res.redirect('/login');})
 
 app.get('/',  (req,res)=>{
     res.render('mainpage');
@@ -108,19 +109,18 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
       console.log(err);
     }
     let havePlaylist = false;
-    let location = '';
+    let location;
     axios({
       method: 'GET',
       url: `https://api.spotify.com/v1/users/${req.user.id}/playlists`,
       headers: {Authorization: 'Bearer '+ response}
-    }).then((data)=>{
-        data.data.items.forEach((n)=>{
+    }).then((userPlaylist)=>{
+        userPlaylist.data.items.forEach((n)=>{
           if(n.name === "My Mood Now"){
-            location += n.href;
+            location = n.href;
             return havePlaylist = true;
           }
         })
-        console.log(havePlaylist);
         if(!havePlaylist){
           axios({
             method: 'POST',
@@ -132,31 +132,71 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
             'public': false 
             }
           })
-          .then( (data) => {location += data.headers.location;}).catch((err)=>{console.log(err);})
+          .then( (appPlaylist) => {location = appPlaylist.headers.location;}).catch((err)=>{console.log(err);})
       }}).then(()=>{
+            let yourEmotionState = req.user.id + '_emotion';
+            client.get(yourEmotionState, (err, songCategory)=>{
+            
             axios({
               method: "GET",
-              url: `https://api.spotify.com/v1/browse/categories/party/playlists`,
-              // url: `https://api.spotify.com/v1/browse/categories/${category_id}/playlists`,
+              url: `https://api.spotify.com/v1/browse/categories/${songCategory}/playlists`,
               headers: {Authorization: 'Bearer '+ response}
-            }).then((data)=>{
-              let playlistData = data.data.playlists.items[Math.floor(Math.random()*(data.data.playlists.items.length-1))]
+            }).then((categorySongList)=>{
+              let playlistData = categorySongList.data.playlists.items[Math.floor(Math.random()*(categorySongList.data.playlists.items.length-1))]
               axios({
                 method: "GET",
                 url: `https://api.spotify.com/v1/users/${playlistData.owner.id}/playlists/${playlistData.id}/tracks`,
                 headers: {Authorization: 'Bearer '+ response}
-              }).then((data)=>{
-                let randomTrack = data.data.items[Math.floor(Math.random()*(data.data.items.length-1))].track.uri;
-                let trackUrl = randomTrack.replace(':', '%3A')
-                axios({
-                  method: 'POST',
-                  url: `${location}/tracks?uris=${trackUrl}`,
-                  headers: {Authorization: 'Bearer '+ response}
+              }).then((desireTrack)=>{
+                let totalTime = 0;
+                let yourSongTime = req.user.id + '_songTime';
+                let theTempList = [];
+                // let theTempListDetail = req.user.id + '_tempList';
+                getANewSong(desireTrack);
+                getANewSong(desireTrack);
+                getANewSong(desireTrack);
+                setTimeout(deleteSong, totalTime)
+
+                function getANewSong (desireTrack){
+                  var randomNumber = Math.floor(Math.random()*(desireTrack.data.items.length-1));
+                  var ms = desireTrack.data.items[randomNumber].track.duration_ms;
+                  var min = ms / 1000 / 60;
+                  var r = min % 1;
+                  var sec = Math.floor(r * 60);
+                  if (sec < 10) {sec = '0'+sec;}
+                  min = Math.floor(min);
+                  // console.log(min+':'+sec);
+                  totalTime += ms;
+                  let randomTrack = desireTrack.data.items[randomNumber].track.uri;
+                  // theTempList += (randomTrack + ',');
+                  theTempList.push(randomTrack)
+                  let trackUrl = randomTrack.replace(':', '%3A')
+                  axios({
+                    method: 'POST',
+                    url: `${location}/tracks?uris=${trackUrl}`,
+                    headers: {Authorization: 'Bearer '+ response}
+                  })
+                }
+
+                function deleteSong(){
+                  axios({
+                    method: 'DELETE',
+                    url: `${location}/tracks`,
+                    headers: {Authorization: 'Bearer '+ response},
+                    data: {'tracks': [{'uri': theTempList[0], 'positions':[0]}, {'uri': theTempList[1], 'positions':[1]}, {'uri': theTempList[2], 'positions':[2]}]}
+                  }).then((response)=>{console.log('Removed Tracks')}).catch((err)=>{console.log('ERROR is deleting the song')})
+                }
+
+                client.set(yourSongTime, totalTime, (err,data)=>{
+                  if(err){
+                    console.log('ERROR is saving songTime');
+                  }
                 })
               }).catch((err)=>{
                 console.log('"ERROR in getting a track');
               })
             }).catch((err)=>{console.log(err)});
+            })
       }).catch((err)=>{
         console.log(err);
       })
@@ -165,43 +205,130 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
 })
 
 //take photo (1. showing, only for window // 2.not showing, only for mac)
-app.post('/takephoto', ensureAuthenticated, (req,res)=>{
-  res.sendFile('getusermedia.html', {root: __dirname });
-  // takePhoto();
-  // setTimeout(deleteImage, 20000);
-  // res.render('image');
+app.get('/takephoto', ensureAuthenticated, (req,res)=>{
+  setTimeout(takePhoto, 2000);
+  setTimeout(deleteImage, 23000);
+  res.sendFile('takeyourphoto.html',  { root : __dirname})
+})
+
+app.get('/processingphoto', ensureAuthenticated, (req,res)=>{
+  res.sendFile('processingphoto.html',  { root : __dirname});
+})
+
+app.get('/processphoto', ensureAuthenticated, (req,res)=>{
+  var imgLink;
+  var deleteHash;
+  base64Img.base64('./public/photo.jpg', function(err, data) {
+    var log = data.replace('data:image/jpg;base64,/', '/');
+    axios({
+    method: 'POST',
+    url: 'https://api.imgur.com/3/upload',
+    headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
+    data: {'image': `${log}`}
+    }).then((response)=>{
+      imgLink = response.data.data.link;
+      deleteHash = response.data.data.deletehash;
+      axios({
+      method: "POST",
+      url: 'https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize',
+      host: 'westus.api.cognitive.microsoft.com',
+      headers: {'Ocp-Apim-Subscription-Key': process.env.faceAPI},
+      data: {'url':`${imgLink}`}
+      }).then((emotion)=>{
+        console.log(emotion.data[0].scores);
+        let emotionData = emotion.data[0].scores;
+        let mainEmotion = Object.keys(emotionData).reduce((first, second)=>{
+          if(emotionData[first] > emotionData[second]){
+            return first;
+          } else {
+            return second;
+          }
+        })
+        let musicType;
+        let musicYouNeed = {
+          'anger': ['chill', 'jazz'],
+          'contempt': ['jazz', 'rnb'],
+          'disgust': ['focus', 'comedy'],
+          'fear': ['soul','chill'],
+          'happiness': ['party', 'travel' ],
+          'neutral': ['classic', 'country', 'focus', 'sleep', 'mandopop','dinner'],
+          'sadness': ['mood', 'chill', 'kpop'],
+          'surprise': ['party', 'funk', 'edm_dance']
+        }
+        musicType = musicYouNeed[mainEmotion][Math.floor(Math.random()*(musicYouNeed[mainEmotion].length))]
+        let yourEmotionState = req.user.id + '_emotion'
+        client.set(yourEmotionState, musicType, function(err, data){
+          if(err){
+            console.log("CANNOT SAVE the emotion");
+          }
+        })
+      }).then(()=>{
+        axios({
+        method: 'DELETE',
+        url: `https://api.imgur.com/3/image/${deleteHash}`,
+        headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`}
+        }).then((res)=>{console.log("image deleted")}).catch((err)=>{console.log('Err yuen mei')})
+      }).catch((err)=>{console.log('ERROR in uploading image to emotion API' + err)})
+    }).catch((err)=>{console.log("ERROR in uploading and deleting")});
+  })
+  res.render('image');
 })
 
 //get the happiness index
 app.get('/checkphoto', ensureAuthenticated, (req,res)=>{
+  base64Img.base64('smile.jpg', function(err, data) {
   axios({
     method: "POST",
     url: 'https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize',
     host: 'westus.api.cognitive.microsoft.com',
     headers: {'Ocp-Apim-Subscription-Key': process.env.faceAPI},
-    data: './public/smile.jpg'
-    // data: 'chingchow/code/prj2/photos/smile.jpg'
-    // data: {"url": "http://fittedmagazine.com/wp-content/uploads/2016/03/girl-smiling-fitted-1024x681.jpg"}
+    data: {'url':`${data}`}
   }).then((result)=>{console.log(result)}).catch((err)=>{console.log('ERROR')})
-  res.redirect('http://localhost:8000/smile.jpg');
-  // res.render('image'); 
+  res.render('home'); 
+  })
+})
+
+app.get('/check', ensureAuthenticated, (req,res)=>{
+  res.sendFile('capture.html',  { root : __dirname})
+})
+
+app.post('/check', ensureAuthenticated, (req,res)=>{
+  let tokenPhoto = req.body['64'].replace('data:image/png;base64,', '')
+  let youPhotoName = req.user.id +'_photo'
+  client.set(youPhotoName, tokenPhoto, (err,data)=>{
+    if(err){
+      console.log('ERROR in client set photo')
+    }
+    client.get(youPhotoName, (err,photoLink)=>{
+      axios({
+        method: 'POST',
+        url: 'https://api.imgur.com/3/upload',
+        headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
+        data: {'image': `${photoLink}`}
+      }).then((response)=>{console.log(response)}).catch((err)=>{console.log('ERROR in saving image token')})
+    })
+  })
+  res.redirect('/check');
 })
 
 
 //callback functions
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
-  else {res.redirect('/auth/spotify')}
+  else {
+    // res.redirect('/callback');
+    res.redirect('/auth/spotify')
+  }
 }
 
 function takePhoto (){
-  imagesnapjs.capture('./photos/photo.jpg', { cliflags: '-w 2'}, function(err) {
+  imagesnapjs.capture('./public/photo.jpg', { cliflags: '-w 2'}, function(err) {
     console.log(err ? err : 'Success!');
   });
 }
 
 function deleteImage(){
-  var path = './photos/photo.jpg';
+  var path = './public/photo.jpg';
   fs.unlink(path, (err)=>{
     if(err){
       console.log(err);
@@ -212,4 +339,4 @@ function deleteImage(){
 }
 
 
-app.listen(8000);
+app.listen(3000);
