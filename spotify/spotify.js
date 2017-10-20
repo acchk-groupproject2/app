@@ -259,15 +259,15 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
       }).then((emotion)=>{
         console.log(emotion.data[0].scores);
         let emotionData = emotion.data[0].scores;
-        Object.keys(emotionData).forEach((eachData)=>{
-          obj[eachData] = emotionData[eachData];
-        })
         let mainEmotion = Object.keys(emotionData).reduce((first, second)=>{
           if(emotionData[first] > emotionData[second]){
             return first;
           } else {
             return second;
           }
+        })
+        Object.keys(emotionData).map((eachData)=>{
+          obj[eachData] = (emotionData[eachData]*100).toFixed(1)+'%';
         })
         obj.mainEmotion = mainEmotion;
         let musicYouNeed = {
