@@ -1,0 +1,49 @@
+<div id='textt'>
+
+    Your Photo is Ready
+
+    </br>
+
+    Your are now being <div id='dataofimage'>{{mainEmotion}}</div>, lets listen some <div id='dataofimage'>{{musicType}}</div> songs
+
+    </br>
+
+    {{!-- <div id='seeotherresult'>
+        Click Here To See Other Emotion Results
+    </div> --}}
+
+     <button id='seeotherresult'>Show More Emotion Results</button>  
+
+    <p id='otherresult'>
+        Anger: {{anger}}
+        Contempt: {{contempt}}
+        Disgust: {{disgust}}
+        Fear: {{fear}}
+        Happiness: {{happiness}}
+        Neutral: {{neutral}}
+        Sadness: {{sadness}}
+        Surprise: {{surprise}}
+    </p>
+
+ <form action="/listenmusic" method="GET">
+    <input type='submit' value='Ready to Listen Music On Spotify' id='appButton'>
+</form> 
+
+
+</div>
+
+ <script>
+
+    (function() {
+
+        $('p').hide();
+
+        $('button').click(()=>{
+            $('p').toggle(1000)
+        })
+
+
+    })
+
+</script> 
+

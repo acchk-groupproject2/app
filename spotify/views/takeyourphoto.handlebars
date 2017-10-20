@@ -1,0 +1,29 @@
+<div>
+
+    We are taking your photo, smile to camera;
+    <p id='counting'></p>
+    <img src='./smile.jpg' width="400px" height='300px' id='image'>
+
+</div>
+
+<script>
+  setTimeout(function () {
+     window.location = "/processphoto";
+  }, 10000)
+
+  var timeLeft = 3;
+  document.getElementById("demo").innerHTML = timeLeft;
+    var x = setInterval(function() {
+        timeLeft -= 1;
+        document.getElementById("demo").innerHTML = timeLeft;
+        
+        if (timeLeft < 0) {
+            clearInterval(x);
+            document.getElementById("demo").innerHTML = "Ka-Cha";
+            //document.getElementById("image").src = './public/angry.jpg'
+            setTimeout(function(){document.getElementById("image").src = './public/photo_noonewillnotice.jpg'}, 5000)
+        }
+    }, 1000);
+
+
+</script>

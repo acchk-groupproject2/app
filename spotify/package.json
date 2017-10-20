@@ -1,0 +1,33 @@
+{
+  "name": "prj2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "base64-img": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "cloudinary": "^1.9.0",
+    "cookie-parser": "^1.4.3",
+    "dotenv": "^4.0.0",
+    "express": "^4.16.1",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.15.6",
+    "google-auth-library": "^0.11.0",
+    "googleapis": "^22.2.0",
+    "imagesnapjs": "0.0.7",
+    "passport": "^0.4.0",
+    "passport-spotify": "^0.3.1",
+    "pg": "^6.3.0",
+    "pg-hstore": "^2.3.2",
+    "redis": "^2.8.0",
+    "sequelize": "^4.14.0",
+    "window-popup": "^1.0.1"
+  },
+  "devDependencies": {},
+  "description": ""
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+p {
+  text-align: center;
+  font-size: 60px;
+}
+#image {
+    margin-left: 500px;
+}
+</style>
+</head>
+<body>
+<h1>We are taking the photo of you</h1>
+<p id="demo"></p>
+<img src='/smileplease.jpg' width='300px' height='240px' id='image'>
+
+
+<script>
+
+setTimeout(function () {
+     window.location = "/processingphoto";
+  }, 5000)
+
+var timeLeft = 3;
+document.getElementById("demo").innerHTML = timeLeft;
+
+var x = setInterval(function() {
+    
+
+    timeLeft -= 1;
+    document.getElementById("demo").innerHTML = timeLeft;
+    
+    // If the count down is over, write some text 
+    if (timeLeft < 1) {
+        clearInterval(x);
+        document.getElementById("demo").innerHTML = 'Done';
+        document.getElementById("image").src = '/processing.gif'
+    }
+}, 1000);
+
+
+</script>
+
+</body>
+</html>

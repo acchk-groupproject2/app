@@ -1,0 +1,248 @@
+<html>
+        
+    <head>
+            
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            /* body { font: 13px Helvetica, Arial; } */
+            form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+            form input { border: 0; padding: 10px; width: 50%; margin-right: .5%; }
+            form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+            #messages { list-style-type: none; margin-bottom: 20px; padding: 0;height: 90%;
+                    overflow-y: scroll;overflow-x: hidden; }
+            #messages li { padding: 5px 10px; }
+            #messages li:nth-child(odd) { background: #eee; }
+            #navbar{ background: #2AA54F;height:20px;text-align:center}
+
+            
+    aside {
+        background-color: cornflowerblue;
+        width: /*199px;*/ 250px;
+        /* float: right; */
+        padding: 20px;
+        margin-top: 10px;
+        line-height:1.5;
+        height: auto;
+    }
+
+    address {
+        background-color: #D3D3D3;
+        width: /*199px;*/ 25%;
+        padding: 20px;
+        float:right;
+        margin-top: 10px;
+        line-height:1.5;
+    }
+
+    body {
+        width: /*1000px;*/ 100%;
+        background: /*#5D8AA8;*/ white;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: /*#f0f0f0;*/ white;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size:15px;
+    }
+
+    .container {
+        display: flex;
+        /* flex-flow: column; */
+    }
+
+    main {
+	padding: 5px;
+	width: 750px; /*100%;*/
+    height:250px;
+	/* float: left; */
+
+	margin-bottom: 10px;
+	margin-top: 10px;
+    }
+
+    .playlist {
+        background-color: lightskyblue;
+        width: /*199px;*/ 750px;
+        /*float: right;*/
+        padding: 20px;
+        margin-top: 10px;
+        line-height:1.5;
+        height: auto;
+    }
+
+    .flex-row {
+    flex-direction: row;
+    display: flex;
+    }
+
+    .flex-column {
+        flex-direction: column;
+        display: flex;
+    }
+
+    .flex-body {
+        display: flex;
+
+    }
+
+    .flex-body div:not([class*="flex"]) {
+        border: 1px solid white;
+        flex: 1 1 300px;
+        width: 750px;
+        
+    }
+
+    </style>
+    </head>
+    <body>
+            <!-- <div class="flex-body">
+                    <div class="flex-row">
+                      <div style="background: #0980cc;"></div>
+                    </div>
+                    <div class="flex-column">
+                      <div style="background: #09cc69;"></div>
+                      <div style="background: #cc092f;"></div>
+                    </div>
+                  </div> -->
+
+    <div class="flex-body">
+
+        <div class="flex-column">
+
+            <div class="playlist">
+
+                <h1>The Multifaceted Jukebox</h1>
+                <h4>Your One and Only Source of Music Therapy</h1>
+
+                <object data="http://savethepigs.surge.sh/" allowtransparency="true" width="700" height="300">
+                    
+                    <!-- <embed src="http://www.web-source.net" width="700" height="300"> </embed>
+                    Error: Embedded data could not be displayed. -->
+                </object> 
+
+                
+            </div>
+
+            <main>
+
+                <nav id='navbar'>Your name is <b><span id="username"></span></b>. Online Users: <span id="numUsers"></span></nav>
+                <ul id="messages"></ul>
+                <form action="">
+                    <input id="m" autocomplete="off" /><button>Send</button>
+                </form>
+
+            </main>
+ 
+
+        </div>
+
+        <div class="flex-row">
+
+            <aside>
+                <h1 style="text-decoration: underline">Online Users</h1>
+                <ul id='users'></ul>
+            
+            </aside>
+
+
+        </div>
+
+    </div>
+  
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.slim.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+        var socket = io();
+
+
+        socket.on('connect', function() {
+                
+            //On connection to server, ask for user's name 
+                const username = prompt("Please input your username:");
+
+                $('#username').html(username);
+
+                //Emits an event 'adduser' and sends the user name to the server
+                socket.emit('adduser', username);
+
+        });
+
+        //Listens for the userCount emit events from server and updates the DOM whenever this event is triggered
+        socket.on('userCount', function (data) {
+                $('#numUsers').html(data.userCount);
+            });
+
+        //Whenever the server emits 'updateusers', this updates the username list
+        socket.on('updateusers', function(data) {
+            $('#users').empty();
+            $.each(data, function(key, value) {
+                $('#users').append('<ul>' + key + '</ul>');
+            });
+
+        });
+
+        //Whenever the server emits 'updatechat', this updates the chatbox
+        socket.on('updatechat', function(username, data) {
+            $('#messages').append(username + ": " + data + '<br>');
+        });
+
+        $(function () {
+        
+            //When the user clicks SEND
+            $('form').submit(function(){ 
+                //Fires off an emit event 'sendchat' to the server
+                var message = $('#m').val();
+                socket.emit('sendchat', message);
+                $('#m').val(''); //clears the input box every time
+                
+                return false; //prevent reloading of page
+            });
+            socket.on('sendchat', function(msg){
+                //Listens out for the server broadcast and renders the message to the user
+                $('#messages').append($('<li>').text(`${msg.username} : ${msg.message} \n`));
+            }); 
+
+        
+        });
+
+
+
+        // Detect typing
+
+// function timeoutFunction() {  
+//     typing = false;
+//     socket.emit("typing", false);
+//     socket.emit("notTyping", true)
+//   }
+
+//   $("#msg").keypress(function(e){
+//     if (e.which !== 13) {
+//       if (typing === false && $("#msg").is(":focus")) {
+//       typing = true;
+//       socket.emit("typing", true);
+//       } else {
+//           clearTimeout(timeout);
+//           timeout = setTimeout(timeoutFunction, 1500);
+//         }
+//     }
+//     else if(e.which == 13 && $("#msg").val() !== "") {
+//       $("#"+data.person+"").remove();
+//     }
+//   });
+
+//   socket.on("isTyping", function(data) {  
+//     if (data.isTyping) {
+//       if ($("#"+data.person+"").length === 0) {
+//         socket.emit("checkTypingFunction");
+//         $("#chat").append("<div id='"+ data.person +"'><span class='grey'>" + data.person + " is typing...</div>");
+//         timeout = setTimeout(timeoutFunction, 1500);
+//       }
+//     } else {
+//        $("#"+data.person+"").remove();
+//       }
+//   });
+    </script>
+    
+    </body>
+</html>
+    
