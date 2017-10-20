@@ -15,6 +15,8 @@ const client = redis.createClient({
     port: 6379
 });
 const base64Img = require('base64-img');
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
 app.use(bodyParser.json({limit: "50mb"}));
 app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
@@ -52,14 +54,16 @@ app.engine('handlebars', hb({
 
 app.set('view engine', 'handlebars');
 
+var client_id = "8fbb168b35ee49e0a618cc027b88604d";
+var client_secret = "1236d263c4ec4276a3eb062c811d85fb";
 
-var client_id = process.env.spotify_client_id;
-var client_secret = process.env.spotify_client_secret;
+// var client_id = process.env.spotify_client_id;
+// var client_secret = process.env.spotify_client_secret;
 
 passport.use(new SpotifyStrategy({
     clientID: client_id,
     clientSecret: client_secret,
-    callbackURL: "http://139.59.247.87:8080/callback"
+    callbackURL: "http://megaexplorer.net:8000/callback"
   },
   function(accessToken, refreshToken, profile, done) {
   process.nextTick(function () {
@@ -226,6 +230,12 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
   })
 })
 
+app.get('/chatmusic', ensureAuthenticated, (req,res)=>{
+  let yourPlaylistID = req.user.id+'_playlistID';
+  client.get(yourPlaylistID, (err,data)=>{
+    res.render('addedmusic_nonav', {'username': req.user.id, 'playlistid': data});
+  })
+})
 
 app.get('/processingphoto', ensureAuthenticated, (req,res)=>{
   let username = 'photo_'+req.user.id+'.jpg';
@@ -245,7 +255,7 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
     axios({
     method: 'POST',
     url: 'https://api.imgur.com/3/upload',
-    headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`, Accept: 'application/json'},
+    headers: {Authorization: `Client-ID 33fe8399adb31dc`, Accept: 'application/json'},
     data: {'image': `${photobase64}`}
     }).then((response)=>{
       imgLink = response.data.data.link;
@@ -254,11 +264,12 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
       method: "POST",
       url: 'https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize',
       host: 'westus.api.cognitive.microsoft.com',
-      headers: {'Ocp-Apim-Subscription-Key': process.env.faceAPI},
+      headers: {'Ocp-Apim-Subscription-Key': `a9ccd90199684954b1d53482133f0c4a`},
       data: {'url':`${imgLink}`}
       }).then((emotion)=>{
         console.log(emotion.data[0].scores);
         let emotionData = emotion.data[0].scores;
+
         let mainEmotion = Object.keys(emotionData).reduce((first, second)=>{
           if(emotionData[first] > emotionData[second]){
             return first;
@@ -300,7 +311,7 @@ app.get('/processphoto', ensureAuthenticated, (req,res)=>{
         axios({
         method: 'DELETE',
         url: `https://api.imgur.com/3/image/${deleteHash}`,
-        headers: {Authorization: `Client-ID ${process.env.imgur_client_id}`}
+        headers: {Authorization: `Client-ID 33fe8399adb31dc`}
         }).then(()=>{
           console.log("image deleted");
           // return res.redirect('/login');
@@ -353,4 +364,153 @@ function ensureAuthenticated(req, res, next) {
 }
 
 
-app.listen(8080);
+app.get('/chatroom', (req, res) => {
+
+  res.sendFile(__dirname + '/index.html');
+});
+
+
+
+var userCount = 0;
+var usernames = {}; //Object variable for storing the usernames currently connected to the chat
+
+var rooms = ['Lobby', 'anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise'];
+
+io.on('connection', (socket) => {
+  
+  //Increases counter and emits the userCount event
+  userCount++;
+  io.emit('userCount', {userCount: userCount});
+
+  //When the client emits 'adduser', the server listens and executes below
+  socket.on('adduser', function(username) {
+
+      //Make name unique by adding an extra '2' and change name to unique name in green bar
+      while (usernames.hasOwnProperty(username)) {
+          username += "2";
+          socket.emit('checkname', username);
+      }
+  
+      //First of all, we store the username in the socket session
+      socket.username = username;
+
+      //We also store the room's name in the socket session
+      socket.room = 'Lobby'; 
+
+      // Then add the client's username to the global usernames variable
+      usernames[username] = username;
+
+      //The first room to join on connecting
+      socket.join('Lobby');
+      
+      //Update the list of users in the chat on the client's side
+      io.sockets.emit('updateusers', usernames);
+
+      //Echo to client that they have connected
+      socket.emit('updatechat', 'SERVER', 'you have connected to Lobby');
+
+      //Broadcast to all other clients that a user has connected
+      socket.broadcast.to('Lobby').emit('updatechat', 'SERVER', username + ' has connected to this room');
+
+      //Updates the room list with the current room as 'Lobby'
+      socket.emit('updaterooms', rooms, 'Lobby');
+  });
+
+  //Only allows chat function to be broadcasted to each specific room
+  socket.on('sendchat', function(data) {
+      io.sockets["in"](socket.room).emit('updatechat', socket.username, data);
+  });
+  
+  //Listens for 'switchRoom' event from the client then broadcasts the relevant messages and updates room list
+  socket.on('switchRoom', function(newroom) {
+      var oldroom;
+      oldroom = socket.room;
+      socket.leave(socket.room);
+      socket.join(newroom);
+      socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
+      if (newroom == 'anger') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'anger' chatroom, an ideal place for you to \
+           let things out of your system.  Rules: No swearing and no insults to be directed at anyone. \
+            Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'contempt') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'contempt' chatroom, an ideal place for you to \
+          discuss with others why you have contempt for somebody.  Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'disgust') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'disgust' chatroom, an ideal place for you to \
+          share with others why you have disgust for somebody or things that have been happening . \
+           Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'fear') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'fear' chatroom, an ideal place for you to \
+          find comfort in times where you feel scared or fear that things are not going the way they should be. \
+           Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'happiness') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'happiness' chatroom, an ideal place for you to \
+          have fun chatting with others and partying in this virtual world on the internet. However, \
+          we strongly encourage you to visit other chatrooms and try to help people out of their negative emotional states. \
+           Rules: No swearing and getting too high that you are annoying other users. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'neutral') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'neutral' chatroom, an ideal place for you to \
+          enjoy chatting with others who are also neutral and bored.  Even though you may not feel like partying, \
+          we strongly encourage you elevate your mood as much as possible so that you can visit other chatrooms \
+          to help people out of their negative emotional states.  Smile more and be happy! \
+           Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'sadness') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'sadness' chatroom, an ideal place for you to \
+          share with others who are also on the same kind of boat as you.  We understand that every once in \
+          a while, we as humans need to take some time out to let things out of our system, before we can \
+          return to the happy, healthy state of mind again.  We hope that you can be happy again as soon as \
+          possible so you can be a great testimony for others. Smile at the camera again soon! \
+           Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+      else if (newroom == 'surprise') {
+          socket.emit('updatechat', 'SERVER', "Welcome to the 'surprise' chatroom, an ideal place for you to \
+          share surprising things that have been happening in your life with others.  As surprises can come \
+          in good and bad, we hope that people in this chatroom can still relate to each other well by \
+          being a good listener to each other.  Please remember that our mission is to create an internet \
+          community full of love and harmony. \
+           Rules: No swearing and no insults to be directed at anyone. \
+           Should you violate any of our rules, you will be banned.");
+      }
+
+      socket.broadcast.to(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room');
+      socket.room = newroom;
+      socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room');
+
+      socket.emit('updaterooms', rooms, newroom);
+  });
+
+  socket.on('disconnect', () => {
+
+      //Remove the username from the global usernames variable
+      delete usernames[socket.username];
+      //Update the list of users the the chat on the client-side
+      io.sockets.emit('updateusers', usernames);
+
+      //Broadcast to all other clients that a user has left.
+      socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
+       
+      //Decreases counter on disconnect and emits another userCount event
+      userCount--;
+      io.emit('userCount', { userCount: userCount });
+
+      socket.leave(socket.room);
+  });
+
+
+});
+
+http.listen(8000);
+
+//app.listen(8000);
