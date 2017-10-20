@@ -150,7 +150,7 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
           })
           .then( (appPlaylist) => {
             location = appPlaylist.headers.location;
-            client.set(yourPlaylistID, appPlaylist.headers.id, (err,data)=>{
+            client.set(yourPlaylistID, appPlaylist.data.id, (err,data)=>{
               if(err){console.log('CANNOT SAVE playlist id when no playlist before')}
             })
           }).catch((err)=>{console.log(err);})
@@ -161,7 +161,7 @@ app.get('/listenmusic', ensureAuthenticated, (req, res)=>{
               url: `https://api.spotify.com/v1/browse/categories/${songCategory}/playlists`,
               headers: {Authorization: 'Bearer '+ response}
             }).then((categorySongList)=>{
-              let playlistData = categorySongList.data.playlists.items[Math.floor(Math.random()*(categorySongList.data.playlists.items.length-1))]
+              let playlistData = categorySongList.data.playlists.items[Math.floor(Math.random()*(categorySongList.data.playlists.items.length))]
               axios({
                 method: "GET",
                 url: `https://api.spotify.com/v1/users/${playlistData.owner.id}/playlists/${playlistData.id}/tracks`,

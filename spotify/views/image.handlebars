@@ -16,12 +16,19 @@
 
     <p id='otherresult'>
         Anger: {{anger}}
+        </br>
         Contempt: {{contempt}}
+        </br>
         Disgust: {{disgust}}
+        </br>
         Fear: {{fear}}
+        </br>
         Happiness: {{happiness}}
+        </br>
         Neutral: {{neutral}}
+        </br>
         Sadness: {{sadness}}
+        </br>
         Surprise: {{surprise}}
     </p>
 
@@ -34,13 +41,13 @@
 
  <script>
 
-    (function() {
+    $(document).ready(()=>{
+        /*$('button').click(()=>{
+            $('p').toggle(false);
+        })*/
+        $('#otherresult').hide();
+    })
 
-        $('p').hide();
-
-        $('button').click(()=>{
-            $('p').toggle(1000)
-        })
 
 
     })
